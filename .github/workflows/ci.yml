@@ -43,16 +43,19 @@ jobs:
         if: steps.cache-dep.outputs.cache-hit != 'true'
         run: npm ci
 
-      - uses: actions/checkout@v2
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 30
-
       - name: Collect changed files
         run: |
           mkdir ~/tmp/
+          echo ${{ github.event.pull_request.base.sha }}
+          echo ${{ github.sha }}
           git diff ${{ github.event.pull_request.base.sha }} ${{ github.sha }} --name-only --relative '*src/**/*.ts' > ~/tmp/changed_files
           echo -e "Changed files: \n$(cat ~/tmp/changed_files)"
+
+      - uses: actions/checkout@v2
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 30
 
       - name: Lint
         run: npx eslint $(cat ~/tmp/changed_files)
